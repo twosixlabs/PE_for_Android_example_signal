@@ -180,6 +180,11 @@ public class RecipientDatabase extends Database {
   }
 
   public RecipientId getOrInsertFromE164(@NonNull String e164) {
+    // Insert µPAL here
+    // This routine looks up a phone number (ITU E.164 format) in the RecipientDatabase and
+    //   either returns a Recipient record or creates a new one if empty.
+    // Here we insert the phone-to-name lookup PAL to add the full name from the user's contacts
+    //   when a record is being created.
     if (TextUtils.isEmpty(e164)) {
       throw new AssertionError("Phone number cannot be empty.");
     }
