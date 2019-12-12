@@ -190,7 +190,6 @@ public class ContactsCursorLoader extends CursorLoader {
   private List<Cursor> getContactsCursors() {
     List<Cursor> cursorList = new ArrayList<>(2);
 
-    /*
     if (!Permissions.hasAny(getContext(), Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS)) {
       return cursorList;
     }
@@ -205,7 +204,6 @@ public class ContactsCursorLoader extends CursorLoader {
       cursorList.add(filterNonPushContacts(contactRepository.queryNonSignalContacts(filter)));
     }
 
-     */
     return cursorList;
   }
 

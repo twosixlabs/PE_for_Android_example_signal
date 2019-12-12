@@ -699,15 +699,15 @@ public class MediaSendActivity extends PassphraseRequiredActionBarActivity imple
       hud.hideCurrentInput(composeText);
     }
 
-    /*
+
     Permissions.with(this)
 
-               .request(Manifest.permission.READ_CONTACTS)
+               .request(/*Manifest.permission.READ_CONTACTS*/)
                .ifNecessary()
                .withPermanentDenialDialog(getString(R.string.MediaSendActivity_signal_needs_contacts_permission_in_order_to_show_your_contacts_but_it_has_been_permanently_denied))
                .onAllGranted(() -> {
 
-    */
+
                  Fragment contactFragment = CameraContactSelectionFragment.newInstance();
                  Fragment editorFragment  = getSupportFragmentManager().findFragmentByTag(TAG_SEND);
 
@@ -721,12 +721,12 @@ public class MediaSendActivity extends PassphraseRequiredActionBarActivity imple
                                             .hide(editorFragment)
                                             .addToBackStack(null)
                                             .commit();
-                        /*
+
       })
                .onAnyDenied(() -> Toast.makeText(MediaSendActivity.this, R.string.MediaSendActivity_signal_needs_access_to_your_contacts, Toast.LENGTH_LONG).show())
                .execute();
 
-     */
+
   }
 
   private Fragment getOrCreateCameraFragment() {

@@ -376,12 +376,9 @@ public class WebRtcCallService extends Service implements PeerConnection.Observe
       public void onSuccessContinue(List<PeerConnection.IceServer> result) {
         try {
           boolean isSystemContact = false;
-/*
-          if (Permissions.hasAny(WebRtcCallService.this, Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS)) {
+          if (Permissions.hasAny(WebRtcCallService.this, /*Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS*/ null)) {
             isSystemContact = ContactAccessor.getInstance().isSystemContact(WebRtcCallService.this, recipient.requireAddress().serialize());
           }
-
- */
 
           boolean isAlwaysTurn = TextSecurePreferences.isTurnOnly(WebRtcCallService.this);
 

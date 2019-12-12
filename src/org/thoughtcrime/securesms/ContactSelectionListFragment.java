@@ -117,8 +117,8 @@ public final class ContactSelectionListFragment extends    Fragment
 
     handleContactPermissionGranted();
 
-   /* Permissions.with(this)
-               .request(Manifest.permission.WRITE_CONTACTS, Manifest.permission.READ_CONTACTS)
+    Permissions.with(this)
+               .request(/*Manifest.permission.WRITE_CONTACTS, Manifest.permission.READ_CONTACTS*/)
                .ifNecessary()
                .onAllGranted(() -> {
                  if (!TextSecurePreferences.hasSuccessfullyRetrievedDirectory(getActivity())) {
@@ -137,8 +137,6 @@ public final class ContactSelectionListFragment extends    Fragment
                  }
                })
                .execute();
-
-    */
   }
 
   @Override
@@ -215,19 +213,16 @@ public final class ContactSelectionListFragment extends    Fragment
     showContactsButton.setVisibility(View.VISIBLE);
 
     showContactsButton.setOnClickListener(v -> {
-      /*
-            }
       Permissions.with(this)
-                 .request(Manifest.permission.WRITE_CONTACTS, Manifest.permission.READ_CONTACTS)
+                 .request(/*Manifest.permission.WRITE_CONTACTS, Manifest.permission.READ_CONTACTS*/)
                  .ifNecessary()
                  .withPermanentDenialDialog(getString(R.string.ContactSelectionListFragment_signal_requires_the_contacts_permission_in_order_to_display_your_contacts))
                  .onSomeGranted(permissions -> {
-                   if (permissions.contains(Manifest.permission.WRITE_CONTACTS)) {*/
-                     handleContactPermissionGranted();/*
+                   if (permissions.contains(Manifest.permission.WRITE_CONTACTS)) {
+                     handleContactPermissionGranted();
                    }
                  })
                  .execute();
-                 */
     });
   }
 
