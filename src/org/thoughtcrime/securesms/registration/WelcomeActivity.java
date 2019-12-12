@@ -32,7 +32,7 @@ public class WelcomeActivity extends BaseActionBarActivity {
 
   private void onContinueClicked() {
     Permissions.with(this)
-        .request(Manifest.permission.WRITE_CONTACTS, Manifest.permission.READ_CONTACTS,
+        .request(/*Manifest.permission.WRITE_CONTACTS, Manifest.permission.READ_CONTACTS,*/
             Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE,
             Manifest.permission.READ_PHONE_STATE)
         .ifNecessary()

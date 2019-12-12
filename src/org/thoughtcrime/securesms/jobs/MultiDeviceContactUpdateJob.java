@@ -153,10 +153,11 @@ public class MultiDeviceContactUpdateJob extends BaseJob {
   private void generateFullContactUpdate()
       throws IOException, UntrustedIdentityException, NetworkException
   {
-    if (!Permissions.hasAny(context, Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS)) {
+    //if (!Permissions.hasAny(context, Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS)) {
       Log.w(TAG, "No contact permissions, skipping multi-device contact update...");
       return;
-    }
+    //}
+    /*
 
     boolean isAppVisible      = ApplicationContext.getInstance(context).isAppVisible();
     long    timeSinceLastSync = System.currentTimeMillis() - TextSecurePreferences.getLastFullContactSyncTime(context);
@@ -208,6 +209,7 @@ public class MultiDeviceContactUpdateJob extends BaseJob {
     } finally {
       if (contactDataFile != null) contactDataFile.delete();
     }
+     */
   }
 
   @Override
