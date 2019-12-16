@@ -4,6 +4,12 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.ResultReceiver;
+import android.privatedata.DataRequest;
+import android.privatedata.PrivateDataManager;
 import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
@@ -13,6 +19,7 @@ import com.annimon.stream.Stream;
 
 import net.sqlcipher.database.SQLiteDatabase;
 
+import org.thoughtcrime.securesms.ApplicationContext;
 import org.thoughtcrime.securesms.color.MaterialColor;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
 import org.thoughtcrime.securesms.logging.Log;
@@ -30,6 +37,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static org.thoughtcrime.securesms.util.Util.sleep;
 
 public class RecipientDatabase extends Database {
 
@@ -179,6 +188,48 @@ public class RecipientDatabase extends Database {
     super(context, databaseHelper);
   }
 
+  public class MyResultReceiver extends ResultReceiver {
+
+    public String name = "";
+    public boolean done = false;
+
+    MyResultReceiver(Handler h){
+      super(h);
+    }
+
+    @Override
+    protected void onReceiveResult(int resultCode, Bundle resultData) {
+      android.util.Log.d("PE_Android", "Received result");
+
+      if (resultCode == PrivateDataManager.RESULT_SUCCESS) {
+        android.util.Log.e("PE_Android", "Success!!!");
+      } else {
+        android.util.Log.e("PE_Android", "Failed!!!");
+      }
+
+      StringBuffer outputText = new StringBuffer("Result Bundle: ");
+      if (resultData != null) {
+        outputText.append("\n");
+        for (String key : resultData.keySet()) {
+          if (key.equals("name")) {
+            name = resultData.get(key).toString();
+          }
+          outputText.append(" ");
+          outputText.append(key);
+          outputText.append(" = ");
+          outputText.append(resultData.get(key).toString());
+          outputText.append("\n");
+        }
+      } else {
+        outputText.append("null");
+      }
+
+      done = true;
+
+      android.util.Log.e("PE_Android", outputText.toString());
+    }
+  }
+
   public RecipientId getOrInsertFromE164(@NonNull String e164) {
     // Insert µPAL here
     // This routine looks up a phone number (ITU E.164 format) in the RecipientDatabase and
@@ -189,6 +240,27 @@ public class RecipientDatabase extends Database {
       throw new AssertionError("Phone number cannot be empty.");
     }
 
+    PrivateDataManager pdm = PrivateDataManager.getInstance();
+
+    Bundle recParams = new Bundle();
+
+    recParams.putString("phone", e164);
+
+    MyResultReceiver mReceiver = new MyResultReceiver(new Handler(Looper.getMainLooper()));
+
+    DataRequest recReq = new DataRequest(ApplicationContext.getAppContext(), DataRequest.DataType.CONTACTS, null,
+            "com.twosixlabs.phonenameupal.NumberToNamePAL", recParams,
+            DataRequest.Purpose.TEST("Test"), mReceiver );
+
+    pdm.requestData(recReq);
+
+    while(!mReceiver.done){
+      sleep(250);
+    }
+
+    // For now print the name
+    Log.e("PE_Android", "Got name == " + mReceiver.name);
+
     SQLiteDatabase db    = databaseHelper.getWritableDatabase();
     String         query = PHONE + " = ?";
     String[]       args  = new String[] { e164 };
@@ -197,8 +269,13 @@ public class RecipientDatabase extends Database {
       if (cursor != null && cursor.moveToFirst()) {
         return RecipientId.from(cursor.getLong(0));
       } else {
+
+
         ContentValues values = new ContentValues();
         values.put(PHONE, e164);
+
+        // TODO: Add Contact Name from uPAL lookup to expected DB contact entry format...
+
         long id = db.insert(TABLE_NAME, null, values);
         return RecipientId.from(id);
       }

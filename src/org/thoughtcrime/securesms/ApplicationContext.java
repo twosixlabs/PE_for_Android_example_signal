@@ -102,6 +102,7 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
   private JobManager               jobManager;
   private IncomingMessageObserver  incomingMessageObserver;
   private PersistentLogger         persistentLogger;
+  private static Context           appContext;
 
   private volatile boolean isAppVisible;
 
@@ -109,9 +110,14 @@ public class ApplicationContext extends MultiDexApplication implements DefaultLi
     return (ApplicationContext)context.getApplicationContext();
   }
 
+  public static Context getAppContext() {
+    return appContext;
+  }
+
   @Override
   public void onCreate() {
     super.onCreate();
+    appContext = getApplicationContext();
     Log.i(TAG, "onCreate()");
     initializeSecurityProvider();
     initializeLogging();
