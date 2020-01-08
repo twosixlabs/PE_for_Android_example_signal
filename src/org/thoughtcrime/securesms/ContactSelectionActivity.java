@@ -53,6 +53,8 @@ public abstract class ContactSelectionActivity extends PassphraseRequiredActionB
   protected ContactSelectionListFragment contactsFragment;
 
   private ContactFilterToolbar toolbar;
+  private String previousQuery = null;
+  private String generatedQuery = null;
 
   @Override
   protected void onPreCreate() {
@@ -80,6 +82,16 @@ public abstract class ContactSelectionActivity extends PassphraseRequiredActionB
     super.onResume();
     dynamicTheme.onResume(this);
     dynamicLanguage.onResume(this);
+
+    // NOTE(irwin) Set the toolbar value to the stored one when this Activity resumes
+    if(generatedQuery != null && (previousQuery == null || !generatedQuery.equals(previousQuery))) {
+      toolbar.setSearchText(generatedQuery);
+      previousQuery = generatedQuery;
+    }
+  }
+
+  protected void setQuery(String q) {
+    generatedQuery = q;
   }
 
   protected ContactFilterToolbar getToolbar() {

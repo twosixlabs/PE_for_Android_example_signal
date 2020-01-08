@@ -97,12 +97,18 @@ public class ContactFilterToolbar extends Toolbar {
     setLogo(null);
     setContentInsetStartWithNavigation(0);
     expandTapArea(toggleContainer, dialpadToggle);
-    searchText.requestFocus();
+
+    // NOTE(irwin) commented out so the keyboard doesn't occlude the "Show Contacts" button on load
+    //searchText.requestFocus();
   }
 
   public void clear() {
     searchText.setText("");
     notifyListener();
+  }
+
+  public void setSearchText(String text) {
+    searchText.setText(text);
   }
 
   public void setOnFilterChangedListener(OnFilterChangedListener listener) {
