@@ -30,6 +30,7 @@ import org.thoughtcrime.securesms.util.DynamicLanguage;
 import org.thoughtcrime.securesms.util.DynamicNoActionBarTheme;
 import org.thoughtcrime.securesms.util.DynamicTheme;
 import org.thoughtcrime.securesms.util.TextSecurePreferences;
+import org.thoughtcrime.securesms.util.Util;
 import org.thoughtcrime.securesms.util.ViewUtil;
 
 import java.io.IOException;
@@ -83,8 +84,12 @@ public abstract class ContactSelectionActivity extends PassphraseRequiredActionB
     dynamicTheme.onResume(this);
     dynamicLanguage.onResume(this);
 
-    // NOTE(irwin) Set the toolbar value to the stored one when this Activity resumes
+    // NOTE(irwin) Set the toolbar phone number to the stored one when this Activity resumes
     if(generatedQuery != null && (previousQuery == null || !generatedQuery.equals(previousQuery))) {
+      // NOTE(irwin) Hack: allows the UI to update with actions available for this phone number
+      //             600 ms found by trial and error on a Pixel 2XL
+      Util.sleep(600);
+
       toolbar.setSearchText(generatedQuery);
       previousQuery = generatedQuery;
     }
