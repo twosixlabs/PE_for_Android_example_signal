@@ -103,7 +103,7 @@ public class DirectoryHelper {
 
     RecipientDatabase recipientDatabase                       = DatabaseFactory.getRecipientDatabase(context);
     Stream<String>    eligibleRecipientDatabaseContactNumbers = Stream.of(recipientDatabase.getAllAddresses()).filter(Address::isPhone).map(Address::toPhoneString);
-    Stream<String>    eligibleSystemDatabaseContactNumbers    = null /*Stream.of(ContactAccessor.getInstance().getAllContactsWithNumbers(context)).map(Address::serialize)*/;
+    Stream<String>    eligibleSystemDatabaseContactNumbers    = Stream.empty() /*Stream.of(ContactAccessor.getInstance().getAllContactsWithNumbers(context)).map(Address::serialize)*/;
     Set<String>       eligibleContactNumbers                  = Stream.concat(eligibleRecipientDatabaseContactNumbers, eligibleSystemDatabaseContactNumbers).collect(Collectors.toSet());
 
     Future<DirectoryResult>   legacyRequest         = getLegacyDirectoryResult(context, accountManager, recipientDatabase, eligibleContactNumbers);
