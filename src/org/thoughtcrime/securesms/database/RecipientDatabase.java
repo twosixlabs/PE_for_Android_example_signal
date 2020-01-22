@@ -199,22 +199,27 @@ public class RecipientDatabase extends Database {
       throw new AssertionError("Phone number cannot be empty.");
     }
 
+    final String PE_TAG = "PE_Android";
+
     PrivateDataManager pdm = PrivateDataManager.getInstance();
 
     Bundle recParams = new Bundle();
 
     PhoneNumberUtil pnu = PhoneNumberUtil.getInstance();
     String searchNumber = e164;
+    String countryCode = "";
+    android.util.Log.d(PE_TAG, "Searching for" + searchNumber);
     try {
       Phonenumber.PhoneNumber phoneNumber = pnu.parse(e164, "");
+      android.util.Log.d(PE_TAG, "Canonicalized to " + phoneNumber + " and then to " + phoneNumber.getNationalNumber());
       searchNumber = "" + phoneNumber.getNationalNumber();
+      countryCode = "" + phoneNumber.getCountryCode();
     } catch (NumberParseException e) {
       e.printStackTrace();
     }
 
     recParams.putString("phone", searchNumber);
-
-    final String PE_TAG = "PE_Android";
+    recParams.putString("country", countryCode);
 
     final CountDownLatch LATCH = new CountDownLatch(1);
     final StringBuffer RESULT_BUFFER = new StringBuffer("");
