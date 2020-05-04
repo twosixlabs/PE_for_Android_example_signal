@@ -203,6 +203,7 @@ public class ContactsCursorLoader extends CursorLoader {
     } else if (smsEnabled(mode)) {
       cursorList.add(filterNonPushContacts(contactRepository.queryNonSignalContacts(filter)));
     }
+
     return cursorList;
   }
 

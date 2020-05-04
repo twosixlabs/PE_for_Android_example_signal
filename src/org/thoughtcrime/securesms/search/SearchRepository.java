@@ -122,7 +122,7 @@ public class SearchRepository {
   }
 
   private CursorList<Recipient> queryContacts(String query) {
-    if (!Permissions.hasAny(context, Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS)) {
+    if (!Permissions.hasAny(context, /*Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS*/null)) {
       return CursorList.emptyList();
     }
 

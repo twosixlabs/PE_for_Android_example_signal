@@ -19,10 +19,14 @@ package org.thoughtcrime.securesms;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -73,6 +77,8 @@ public final class ContactSelectionListFragment extends    Fragment
 {
   @SuppressWarnings("unused")
   private static final String TAG = Log.tag(ContactSelectionListFragment.class);
+
+  private static final int PICK_CONTACT_REQUEST = 85;
 
   public static final String DISPLAY_MODE = "display_mode";
   public static final String MULTI_SELECT = "multi_select";
@@ -211,6 +217,10 @@ public final class ContactSelectionListFragment extends    Fragment
     showContactsButton.setVisibility(View.VISIBLE);
 
     showContactsButton.setOnClickListener(v -> {
+      Log.i(TAG, "Showing the trusted contacts picker instead of exercising CONTACTS permissions");
+      openContactsPicker();
+
+      /**
       Permissions.with(this)
                  .request(Manifest.permission.WRITE_CONTACTS, Manifest.permission.READ_CONTACTS)
                  .ifNecessary()
@@ -221,7 +231,58 @@ public final class ContactSelectionListFragment extends    Fragment
                    }
                  })
                  .execute();
+       **/
     });
+  }
+
+  private void openContactsPicker() {
+      Log.i(TAG, String.format("Opening the trusted Android contacts picker (code %d)", PICK_CONTACT_REQUEST));
+
+      Intent intent = new Intent(Intent.ACTION_PICK);
+      intent.setType(ContactsContract.CommonDataKinds.Phone.CONTENT_TYPE);
+      startActivityForResult(intent, PICK_CONTACT_REQUEST);
+  }
+
+  private void receiveContactsPickerData(int resultCode, Intent resultIntent) {
+      if(resultCode == Activity.RESULT_OK) {
+          Log.i(TAG, "receiveContactsPickerData() got data");
+
+          Uri uri = resultIntent.getData();
+          Cursor cursor = getContext().getContentResolver().query(uri, null, null, null, null);
+          cursor.moveToFirst();
+
+          int phoneIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER);
+          String phoneNumber = cursor.getString(phoneIndex);
+
+          if(phoneNumber != null && phoneNumber.length() > 0) {
+            Log.i(TAG, "receiveContactsPickerData() got a phone number. Putting in the text field");
+
+            // NOTE(irwin) Let the Activity handle putting the phone number in the UI text box
+            Context parent = getContext();
+            if(parent instanceof ContactSelectionActivity) {
+              ContactSelectionActivity csa = (ContactSelectionActivity)parent;
+              csa.setQuery(phoneNumber);
+            }
+          }
+
+
+      } else {
+        Log.w(TAG, "receiveContactsPickerData() got bad result code " + resultCode);
+      }
+
+  }
+
+  @Override
+  public void onActivityResult(int requestCode, int resultCode, Intent resultIntent) {
+      switch(requestCode) {
+        case PICK_CONTACT_REQUEST:
+          Log.i(TAG, String.format("onActivityResult() got code PICK_CONTACT_REQUEST (%d)", PICK_CONTACT_REQUEST));
+          receiveContactsPickerData(resultCode, resultIntent);
+          break;
+
+        default:
+          Log.w(TAG, "onActivityResult() got unknown request code " + requestCode);
+      }
   }
 
   public void setQueryFilter(String filter) {
@@ -265,14 +326,21 @@ public final class ContactSelectionListFragment extends    Fragment
     }
 
     emptyText.setText(R.string.contact_selection_group_activity__no_contacts);
-    boolean useFastScroller = data.getCount() > 20;
-    recyclerView.setVerticalScrollBarEnabled(!useFastScroller);
-    if (useFastScroller) {
-      fastScroller.setVisibility(View.VISIBLE);
-      fastScroller.setRecyclerView(recyclerView);
+
+    if(data != null) {
+      Log.i(TAG, "onLoadFinished() data good");
+
+      boolean useFastScroller = data.getCount() > 20;
+      recyclerView.setVerticalScrollBarEnabled(!useFastScroller);
+      if (useFastScroller) {
+        fastScroller.setVisibility(View.VISIBLE);
+        fastScroller.setRecyclerView(recyclerView);
+      } else {
+        fastScroller.setRecyclerView(null);
+        fastScroller.setVisibility(View.GONE);
+      }
     } else {
-      fastScroller.setRecyclerView(null);
-      fastScroller.setVisibility(View.GONE);
+      Log.w(TAG, "onLoadFinished() data null");
     }
   }
 

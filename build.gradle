@@ -1,4 +1,4 @@
-import org.signal.signing.ApkSignerUtil
+//import org.signal.signing.ApkSignerUtil
 
 import java.security.MessageDigest
 
@@ -15,7 +15,7 @@ buildscript {
 }
 
 apply plugin: 'com.android.application'
-apply plugin: 'witness'
+//apply plugin: 'witness'
 
 repositories {
     maven {
@@ -161,7 +161,7 @@ dependencies {
     testImplementation 'org.robolectric:shadows-multidex:4.2'
 }
 
-dependencyVerification {
+/*dependencyVerification {
     configuration = '(play|website)(Debug|Release)RuntimeClasspath'
     verify = [
         'com.google.android.material:material:7680e381a3c03798d999b2e441caadd8a56a0a808e108024a67af9fe26c11adc',
@@ -291,6 +291,7 @@ dependencyVerification {
         'org.whispersystems:curve25519-java:0aadd43cf01d11e9b58f867b3c4f25c3194e8b0623d1953d32dfbfbee009e38d',
     ]
 }
+*/
 
 def canonicalVersionCode = 533
 def canonicalVersionName = "4.48.4"
@@ -304,8 +305,8 @@ def abiPostFix = ['armeabi-v7a' : 1,
 
 android {
     flavorDimensions "none"
-    compileSdkVersion 28
-    buildToolsVersion '28.0.3'
+    compileSdkVersion 'Two Six Labs:PE for Android:28'
+    buildToolsVersion "29.0.1"
     useLibrary 'org.apache.http.legacy'
 
     dexOptions {
@@ -316,7 +317,7 @@ android {
         versionCode canonicalVersionCode * postFixSize
         versionName canonicalVersionName
 
-        minSdkVersion 19
+        minSdkVersion 28
         targetSdkVersion 28
         multiDexEnabled true
 
@@ -491,11 +492,11 @@ def signProductionRelease = { variant ->
         File   inputFile  = new File(output.outputFile.path)
         File   outputFile = new File(output.outputFile.parent, apkName.replace('-unsigned', ''))
 
-        new ApkSignerUtil('sun.security.pkcs11.SunPKCS11',
-                          'pkcs11.config',
-                          'PKCS11',
-                          'file:pkcs11.password').calculateSignature(inputFile.getAbsolutePath(),
-                                                                     outputFile.getAbsolutePath())
+        //new ApkSignerUtil('sun.security.pkcs11.SunPKCS11',
+        //                  'pkcs11.config',
+        //                  'PKCS11',
+        //                  'file:pkcs11.password').calculateSignature(inputFile.getAbsolutePath(),
+        //                                                             outputFile.getAbsolutePath())
 
         inputFile.delete()
         outputFile

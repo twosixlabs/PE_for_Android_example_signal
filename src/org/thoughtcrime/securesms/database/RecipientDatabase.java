@@ -4,15 +4,23 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Bundle;
+import android.os.ResultReceiver;
+import android.privatedata.DataRequest;
+import android.privatedata.PrivateDataManager;
 import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.annimon.stream.Stream;
+import com.google.i18n.phonenumbers.NumberParseException;
+import com.google.i18n.phonenumbers.PhoneNumberUtil;
+import com.google.i18n.phonenumbers.Phonenumber;
 
 import net.sqlcipher.database.SQLiteDatabase;
 
+import org.thoughtcrime.securesms.ApplicationContext;
 import org.thoughtcrime.securesms.color.MaterialColor;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
 import org.thoughtcrime.securesms.logging.Log;
@@ -30,6 +38,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class RecipientDatabase extends Database {
 
@@ -180,23 +190,132 @@ public class RecipientDatabase extends Database {
   }
 
   public RecipientId getOrInsertFromE164(@NonNull String e164) {
+    // Insert µPAL here
+    // This routine looks up a phone number (ITU E.164 format) in the RecipientDatabase and
+    //   either returns a Recipient record or creates a new one if empty.
+    // Here we insert the phone-to-name lookup PAL to add the full name from the user's contacts
+    //   when a record is being created.
     if (TextUtils.isEmpty(e164)) {
       throw new AssertionError("Phone number cannot be empty.");
     }
+
+    final String PE_TAG = "PE_Android";
+
+    PrivateDataManager pdm = PrivateDataManager.getInstance();
+
+    Bundle recParams = new Bundle();
+
+    PhoneNumberUtil pnu = PhoneNumberUtil.getInstance();
+    String searchNumber = e164;
+    String countryCode = "";
+    android.util.Log.d(PE_TAG, "Searching for" + searchNumber);
+    try {
+      Phonenumber.PhoneNumber phoneNumber = pnu.parse(e164, "");
+      android.util.Log.d(PE_TAG, "Canonicalized to " + phoneNumber + " and then to " + phoneNumber.getNationalNumber());
+      searchNumber = "" + phoneNumber.getNationalNumber();
+      countryCode = "" + phoneNumber.getCountryCode();
+    } catch (NumberParseException e) {
+      e.printStackTrace();
+    }
+
+    recParams.putString("phone", searchNumber);
+    recParams.putString("country", countryCode);
+
+    final CountDownLatch LATCH = new CountDownLatch(1);
+    final StringBuffer RESULT_BUFFER = new StringBuffer("");
+    ResultReceiver receiver = new ResultReceiver(null) {
+      @Override
+      protected void onReceiveResult(int resultCode, Bundle resultData) {
+        android.util.Log.d(PE_TAG, "Received result");
+
+        if (resultCode == PrivateDataManager.RESULT_SUCCESS) {
+          android.util.Log.d(PE_TAG, "Success!!!");
+
+          StringBuffer outputText = new StringBuffer("Result Bundle: ");
+          if (resultData != null) {
+            outputText.append("\n");
+            for (String key : resultData.keySet()) {
+              if (key.equals("name")) {
+                RESULT_BUFFER.append(resultData.get(key).toString());
+              }
+              outputText.append(" ");
+              outputText.append(key);
+              outputText.append(" = ");
+              outputText.append(resultData.get(key).toString());
+              outputText.append("\n");
+            }
+          } else {
+            outputText.append("NULL");
+          }
+
+          android.util.Log.d(PE_TAG, outputText.toString());
+        } else {
+          android.util.Log.d(PE_TAG, "Failed!!!");
+          RESULT_BUFFER.append("NULL");
+        }
+
+        LATCH.countDown();
+      }
+    };
+
+    final String UPAL = "com.twosixlabs.exampleupals.NumberToNamePAL";
+    if(pdm.getInstalledPALProviders(DataRequest.DataType.CONTACTS).contains(UPAL)) {
+      DataRequest recReq = new DataRequest(ApplicationContext.getAppContext(), DataRequest.DataType.CONTACTS, null,
+              UPAL, recParams,
+              DataRequest.Purpose.TEST("Test"), receiver);
+
+      pdm.requestData(recReq);
+
+      try {
+        LATCH.await(2, TimeUnit.SECONDS);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    } else {
+      Log.w(PE_TAG, "uPAL " + UPAL + " not found");
+      RESULT_BUFFER.append("NULL");
+    }
+
+
+    // For now print the name
+    String contactName = RESULT_BUFFER.toString();
+    Log.d(PE_TAG, "Got name == " + contactName);
 
     SQLiteDatabase db    = databaseHelper.getWritableDatabase();
     String         query = PHONE + " = ?";
     String[]       args  = new String[] { e164 };
 
     try (Cursor cursor = db.query(TABLE_NAME, ID_PROJECTION, query, args, null, null, null)) {
+      RecipientId recipientId = null;
       if (cursor != null && cursor.moveToFirst()) {
-        return RecipientId.from(cursor.getLong(0));
+        recipientId = RecipientId.from(cursor.getLong(0));
       } else {
+
+
         ContentValues values = new ContentValues();
         values.put(PHONE, e164);
+
+        if(!contactName.equals("NULL")) {
+          values.put(SIGNAL_PROFILE_NAME, contactName);
+          Log.d(PE_TAG, "Recording name from uPAL");
+        }
+
         long id = db.insert(TABLE_NAME, null, values);
-        return RecipientId.from(id);
+        recipientId = RecipientId.from(id);
       }
+
+      // NOTE(id) Update the database with the name
+      if(!contactName.equals("NULL")) {
+        ContentValues values = new ContentValues();
+        values.put(SIGNAL_PROFILE_NAME, contactName);
+
+        String id = "" + recipientId.toString().split("::")[1];
+        String[] whereArgs = new String[]{id};
+
+        db.update(TABLE_NAME, values, ID + "=? AND " + SIGNAL_PROFILE_NAME + " IS NULL", whereArgs);
+      }
+
+      return recipientId;
     }
   }
 
