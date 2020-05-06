@@ -158,7 +158,6 @@ public class MultiDeviceContactUpdateJob extends BaseJob {
       return;
     }
 
-
     boolean isAppVisible      = ApplicationContext.getInstance(context).isAppVisible();
     long    timeSinceLastSync = System.currentTimeMillis() - TextSecurePreferences.getLastFullContactSyncTime(context);
 
